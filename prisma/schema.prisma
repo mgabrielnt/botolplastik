@@ -1,0 +1,65 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum TransactionType {
+  RESTOCK
+  OUT
+  TRANSFER
+  LOST
+  DAMAGED
+  FOUND
+}
+
+enum ItemStatus {
+  NORMAL
+  LOST
+  DAMAGED
+  FOUND
+}
+
+model Warehouse {
+  id        Int           @id @default(autoincrement())
+  code      String        @unique
+  name      String
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  outgoing  Transaction[] @relation("WarehouseFrom")
+  incoming  Transaction[] @relation("WarehouseTo")
+}
+
+model Item {
+  id           Int           @id @default(autoincrement())
+  code         String        @unique
+  name         String
+  category     String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  transactions Transaction[]
+}
+
+model Transaction {
+  id              Int             @id @default(autoincrement())
+  item            Item            @relation(fields: [itemId], references: [id])
+  itemId          Int
+  type            TransactionType
+  status          ItemStatus?
+  date            DateTime
+  quantity        Int
+
+  warehouseFrom   Warehouse?      @relation("WarehouseFrom", fields: [warehouseFromId], references: [id])
+  warehouseFromId Int?
+  warehouseTo     Warehouse?      @relation("WarehouseTo", fields: [warehouseToId], references: [id])
+  warehouseToId   Int?
+
+  note            String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+}
